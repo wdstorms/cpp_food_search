@@ -34,7 +34,7 @@ int main()
 		{1,0,0,1,0,2,2,2,2,2,1,1,1,1,1,1,0,2},
 	};
 
-	Graph graph(smallSearch);
+	Graph graph(trickySearch);
 
     PacmanGraph pg(graph);
 	std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
