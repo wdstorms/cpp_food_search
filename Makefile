@@ -1,14 +1,14 @@
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -O3
+CXXFLAGS = -Wall -Wextra -std=c++17 -g
 
 # Executable names
 TARGET = graph
 TEST_TARGET = test_food_search
 
 # Source files
-SRCS = main.cpp graph.cpp pacman_graph.cpp a*.cpp
-TEST_SRCS = test/test_graph.cpp graph.cpp pacman_graph.cpp a*.cpp
+SRCS = main.cpp graph.cpp pacman_graph.cpp a*.cpp bc_decomposition/bcp_graph.cpp
+TEST_SRCS = test/test_graph.cpp graph.cpp pacman_graph.cpp a*.cpp bc_decomposition/bcp_graph.cpp
 
 # Object files
 OBJS = $(SRCS:.cpp=.o)

@@ -24,6 +24,7 @@ class PacmanGraph {
     std::pair<int, int> unencode(boost::dynamic_bitset<> bit);
     boost::dynamic_bitset<> bit_encode(std::pair<int, int> coord);
     std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> get_successors(std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic); 
+    std::vector<boost::dynamic_bitset<>> get_neighbors(boost::dynamic_bitset<> state); 
     void init_path_memo();
     boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> memo();
 };

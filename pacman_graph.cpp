@@ -121,3 +121,7 @@ std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bi
     }
     return successors;
 }
+
+std::vector<boost::dynamic_bitset<>> PacmanGraph::get_neighbors(boost::dynamic_bitset<> state) {
+    return nodes[state];
+}

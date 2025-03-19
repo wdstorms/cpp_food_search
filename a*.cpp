@@ -10,8 +10,11 @@
 using namespace boost;
 
 static boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> memo_in_use;
-int food_search_heuristic(boost::dynamic_bitset<> position, boost::dynamic_bitset<> food) {
-    if (food == dynamic_bitset(food.size(), 0)) {
+
+
+using namespace boost;
+int food_search_heuristic(dynamic_bitset<> position, dynamic_bitset<> food) {
+    if (food == dynamic_bitset<>(food.size(), 0)) {
         return 0;
     }
     int min_distance = 99999;
