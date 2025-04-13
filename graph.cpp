@@ -57,3 +57,7 @@ const boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair
 	return nodes;
 }
 
+Graph::Graph() {
+	
+}
+

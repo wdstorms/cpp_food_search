@@ -13,6 +13,7 @@ private:
     std::vector<std::vector<int>> m;
 public:
 	Graph(const std::vector<std::vector<int>> &matrix);
+	Graph();
 	int num_nodes() const;
 	void addNode(int x, int y);
     const std::vector<std::vector<int>> &matrix();

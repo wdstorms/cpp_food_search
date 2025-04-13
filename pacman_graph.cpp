@@ -125,3 +125,13 @@ std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bi
 std::vector<boost::dynamic_bitset<>> PacmanGraph::get_neighbors(boost::dynamic_bitset<> state) {
     return nodes[state];
 }
+
+PacmanGraph::PacmanGraph(boost::dynamic_bitset<> start, boost::dynamic_bitset<> f, boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> pm, boost::unordered::unordered_map<boost::dynamic_bitset<>, std::vector<boost::dynamic_bitset<>>> ns) {
+    pac_start = start;
+    food = f;
+    nodes = ns;
+    path_memo = pm;
+}
+
+PacmanGraph::PacmanGraph() {
+}

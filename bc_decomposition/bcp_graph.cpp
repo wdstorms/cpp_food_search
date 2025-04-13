@@ -79,3 +79,32 @@ BCPGraph::BCPGraph(PacmanGraph &g) : pg(g) {
     std::cout << "Remaining edges: " << edge_stack.size() << '\n';
     std::cout << "End Constructor\n";
 }
+
+boost::unordered::unordered_map<boost::dynamic_bitset<>, bool> BCPGraph::articulation_table() {
+    return articulation_points;
+}
+
+PacmanGraph BCPGraph::get_pacgraph() {
+    return pg;
+}
+
+std::vector<boost::dynamic_bitset<>> BCPGraph::get_components(boost::dynamic_bitset<> node) {
+    std::vector<boost::dynamic_bitset<>> components;
+    for (auto c : biconnected_components) {
+        if ((c & node) != boost::dynamic_bitset<>(pg.num_nodes(), 0)) {
+            components.push_back(c);
+        }
+    }
+    return components;
+}
+
+BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vector<boost::dynamic_bitset<>>* visited_components) {
+    auto components = b.get_components(node);
+    boost::dynamic_bitset curr_component;
+    for (auto c : components) {
+        auto it = std::find((*visited_components).begin(), (*visited_components).end(), c);
+        if (it != components.end()) {
+            curr_component = c;
+        }
+    }
+}

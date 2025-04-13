@@ -3,6 +3,7 @@
 #include <boost/unordered_map.hpp>
 #include <vector>
 #include <utility>
+#include <algorithm>
 class PacmanGraph {
     private:
     Graph g;
@@ -15,7 +16,9 @@ class PacmanGraph {
     boost::unordered::unordered_map<std::pair<int, int>, std::string> dirs;
     boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> path_memo;
     public:
+    PacmanGraph();
     PacmanGraph(Graph &g);
+    PacmanGraph(boost::dynamic_bitset<> start, boost::dynamic_bitset<> f, boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> pm, boost::unordered::unordered_map<boost::dynamic_bitset<>, std::vector<boost::dynamic_bitset<>>> ns);
     int num_nodes() const;
     const std::vector<std::vector<int>> &matrix();
     const std::vector<std::vector<int>> &get_walls();

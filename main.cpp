@@ -35,9 +35,10 @@ int main()
 		{1,0,0,1,0,2,2,2,2,2,1,1,1,1,1,1,0,2},
 	};
 
-	Graph graph(smallSearch);
+	Graph graph(minimalSearch);
     PacmanGraph pg(graph);
 	BCPGraph bg(pg);
+	bg.treeify();
 	// std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
 	// auto start = std::chrono::high_resolution_clock::now();
 	// auto path = solve(pg);
