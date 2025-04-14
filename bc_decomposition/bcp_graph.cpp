@@ -148,6 +148,7 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vect
         bitset <<= 1;
     }
     boost::unordered::unordered_map<boost::dynamic_bitset<>, boost::dynamic_bitset<>> new_encodings;
+    boost::unordered::unordered_map<boost::dynamic_bitset<>, std::vector<boost::dynamic_bitset<>>> new_nodes;
     bit = 0;
     bitset = boost::dynamic_bitset<>(p.num_nodes(), 1);
     int new_bit = 0;
@@ -163,6 +164,9 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vect
                     if (std::find((*visited_components).begin(), (*visited_components).end(), c) == (*visited_components).end()) {
                         new_encodings[c] = boost::dynamic_bitset<>(curr_component_num_nodes, 1) << component_bit;
                         component_bit += 1;
+                        // Getting ahead of step 3 by adding treenode connections to adjacency list
+                        new_nodes[new_encodings[bitset]].push_back(new_encodings[c]);
+                        new_nodes[new_encodings[c]].push_back(new_encodings[bitset]);
                     }
                 }
             }
@@ -174,7 +178,34 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vect
     for (auto kv : new_encodings) {
         std::cout << kv.first << " : " << kv.second << "\n";
     }
-
+    std::cout << "\n";
+    for (auto kv : new_nodes) {
+        std::cout << kv.first << ": ";
+        for (auto n : kv.second) {
+            std::cout << n << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+    // Create a new adjacency mapping for the new encodings.
+    for (auto kv : new_encodings) {
+        for (auto n : p.get_neighbors(kv.first)) {
+            if ((n & curr_component) != boost::dynamic_bitset<>(curr_component_num_nodes, 0)) {
+                // std::cout << "_____\n";
+                // std::cout << kv.first << " " << kv.second << "\n";
+                // std::cout << new_encodings[kv.first] << " " << new_encodings[n] << "\n";
+                new_nodes[kv.second].push_back(new_encodings[n]);
+            }
+        }
+    }
+    std::cout << "Step 3 done\n";
+    for (auto kv : new_nodes) {
+        std::cout << kv.first << ": ";
+        for (auto n : kv.second) {
+            std::cout << n << " ";
+        }
+        std::cout << "\n";
+    }
 }
 
 void BCPGraph::treeify() {
