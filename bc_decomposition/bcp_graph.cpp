@@ -106,23 +106,12 @@ std::vector<boost::dynamic_bitset<>> BCPGraph::get_components(boost::dynamic_bit
  * 3) Create a new adjacency mapping for the new encodings.
  * 4) Create a new path memo for the given component.
  * 5) Determine a new food bitset for the component.
- * 6) Construct a new PacmanGraph using the new adjacency map, path memo, food, and start position.
- * 7) Find all articulation points for which there is at least one component not represented and make TreeNodes for them.
+ * 6) Construct a new PacmanGraph using the new adjacency map, path memo, food, and converted start position.
+ * 7) Find all articulation points for which there is at least one component not represented and make TreeNodes for them (child TreeNodes).
  */
-BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vector<boost::dynamic_bitset<>>* visited_components) {
+BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boost::dynamic_bitset<> curr_component, std::vector<boost::dynamic_bitset<>>* visited_components) {
     // Determine biconnected component for this treenode to encapsulate.
-    std::cout << node << "\n";
-    auto components = b.get_components(node);
-    PacmanGraph p = b.get_pacgraph();
-    boost::dynamic_bitset curr_component;
-    for (auto c : components) {
-        auto it = std::find((*visited_components).begin(), (*visited_components).end(), c);
-        if (it == (*visited_components).end()) {
-            curr_component = c;
-            (*visited_components).push_back(c);
-            break;
-        }
-    }
+    auto p = b.get_pacgraph();
     std::cout << curr_component << "\n";
     std::cout << "Step 1 done\n";
     // Revise bit encodings for the given component (including connections to adjacent components).
@@ -206,10 +195,103 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vect
         }
         std::cout << "\n";
     }
+
+    // Create a new path memo for the given component.
+    boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> path_memo;
+    for (auto kv : new_nodes) {
+        auto n = kv.first;
+        if ((n >= boost::dynamic_bitset<>(curr_component_num_nodes, 1) << nodes_within_component_count)) {
+            path_memo[{n, new_nodes[n].front()}] = 99999;
+            continue;
+        }
+        int depth = 0;
+        auto visited = boost::unordered::unordered_set<boost::dynamic_bitset<>>();
+        auto q = std::queue<boost::dynamic_bitset<>>();
+        q.push(n);
+        while (!(q.size() == 0)) {
+            int level_size = q.size();
+            while (level_size != 0 && !(q.size() == 0)) {
+                auto state = q.front();
+                q.pop();
+                if (visited.contains(state)) {
+                    continue;
+                }
+                visited.insert(state);
+                if ((state < boost::dynamic_bitset<>(curr_component_num_nodes, 1) << nodes_within_component_count)) {
+                    path_memo[{n, state}] = depth;
+                }
+                else {
+                    path_memo[{n, state}] = 99999;
+                }
+                for (auto node : new_nodes[state]) {
+                    if (!visited.contains(node)) {
+                        q.push(node);
+                    }
+                }
+                level_size -= 1;
+            }
+            depth += 1;
+        }
+    }
+    std::cout << "Step 4 done\n";
+    // Determine a new food bitset for the component.
+    auto old_food = p.get_food();
+    boost::dynamic_bitset<> new_food = boost::dynamic_bitset<>(curr_component_num_nodes, 0);
+    bit = 0;
+    bitset = boost::dynamic_bitset(p.num_nodes(), 1);
+    while (bit < p.num_nodes()) {
+        if ((bitset & curr_component) != boost::dynamic_bitset<>(p.num_nodes(), 0)) {
+            if ((bitset & old_food) != boost::dynamic_bitset<>(p.num_nodes(), 0)) {
+                new_food |= new_encodings[bitset];
+            }
+        }
+        bit += 1;
+        bitset <<= 1;
+    }
+    std::cout << "Step 5 done\n";
+    std::cout << old_food << " " << new_food << "\n";
+    // Construct a new PacmanGraph using the new adjacency map, path memo, food, and converted start position.
+    pg = PacmanGraph(start_node, new_food, path_memo, new_nodes);
+    std::cout << "Step 6 done\n";
+    // Find all articulation points for which there is at least one component not represented and make TreeNodes for them (child TreeNodes).
+    compute_children(b, visited_components);
+    std::cout << "Step 7 done\n";
+}
+
+void BCPGraph::TreeNode::compute_children(BCPGraph b, std::vector<boost::dynamic_bitset<>>* visited_components) {
+    std::vector<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>> child_components;
+    int bit = 0;
+    auto bitset = boost::dynamic_bitset<>(b.get_pacgraph().num_nodes(), 1);
+    while (bit < b.get_pacgraph().num_nodes()) {
+        if (b.articulation_table()[bitset]) {
+            for (auto c : b.get_components(bitset)) {
+            if (std::find((*visited_components).begin(), (*visited_components).end(), c) == (*visited_components).end()) {
+                child_components.push_back({bitset, c}); // New start position, component
+            }
+            }
+        }
+        bit += 1;
+        bitset <<= 1;
+    }
+    for (auto sc : child_components) {
+        auto s = sc.first;
+        auto c = sc.second;
+        children.push_back(TreeNode(b, s, c, visited_components));
+    }
 }
 
 void BCPGraph::treeify() {
     auto visited = new std::vector<boost::dynamic_bitset<>>();
-    t = new TreeNode(*this, pg.get_pac_start(), visited);
+    PacmanGraph p = get_pacgraph();
+    auto components = get_components(p.get_pac_start());
+    boost::dynamic_bitset curr_component;
+    for (auto c : components) {
+            curr_component = c;
+            (*visited).push_back(c);
+            break;
+    }
+    // std::cout << curr_component << "\n";
+    // std::cout << "Step 1 done\n";
+    t = new TreeNode(*this, pg.get_pac_start(), curr_component, visited);
     delete visited;
 }

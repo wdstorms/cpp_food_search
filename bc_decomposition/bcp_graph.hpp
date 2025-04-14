@@ -37,9 +37,9 @@ class BCPGraph {
         PacmanGraph pg;
         std::vector<TreeNode> children;
         public:
-        std::vector<std::pair<boost::dynamic_bitset<>, std::vector<std::string>>> compute_children();
+        void compute_children(BCPGraph b, std::vector<boost::dynamic_bitset<>>* visited_components);
         TreeNode(BCPGraph b, boost::dynamic_bitset<> node);
-        TreeNode(BCPGraph b, boost::dynamic_bitset<> node, std::vector<boost::dynamic_bitset<>>* visited_components);
+        TreeNode(BCPGraph b, boost::dynamic_bitset<> node, boost::dynamic_bitset<> curr_component, std::vector<boost::dynamic_bitset<>>* visited_components);
     };
 
     TreeNode* t;
