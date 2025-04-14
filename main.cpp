@@ -11,7 +11,7 @@ int main()
 	std::vector<std::vector<int>> minimalSearch = {
 		{2, 0, 0},
 		{3, 1, 2},
-		{0, 2, 0}};
+		{0, 2, 1}};
 
 	std::vector<std::vector<int>> tinySearch = {
 		{2,2,1,1,1,2,2},
@@ -35,10 +35,14 @@ int main()
 		{1,0,0,1,0,2,2,2,2,2,1,1,1,1,1,1,0,2},
 	};
 
-	Graph graph(minimalSearch);
+	Graph graph(trickySearch);
     PacmanGraph pg(graph);
+	auto start = std::chrono::high_resolution_clock::now();
 	BCPGraph bg(pg);
 	bg.treeify();
+	auto end = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> dur = end - start;
+	std::cout << "Precomputation done in: " << dur.count() << " seconds.\n";
 	delete bg.t;
 	// std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
 	// auto start = std::chrono::high_resolution_clock::now();

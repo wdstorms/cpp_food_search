@@ -15,21 +15,21 @@ void BCPGraph::tarjan(boost::dynamic_bitset<> node) {
             children += 1;
             parent[n] = node;
             edge_stack.push(node | n);
-            // std::cout << "Recurse Tarjan\n";
+            // // std::cout << "Recurse Tarjan\n";
             tarjan(n);
             low[node] = std::min(low[node], low[n]);
             if ((parent[node] == zero_node && children > 1) || (parent[node] != zero_node && low[n] >= discover_time[node])) {
                 articulation_points[node] = true;
                 boost::dynamic_bitset<> component = boost::dynamic_bitset<>(pg.num_nodes(), 0);
-                // std::cout << "edge stack size: " << edge_stack.size() << '\n';
+                // // std::cout << "edge stack size: " << edge_stack.size() << '\n';
                 boost::dynamic_bitset<> e = zero_node;
                 while (e != (n | node)) {
-                    // std::cout << edge_stack.top() << "\n";
+                    // // std::cout << edge_stack.top() << "\n";
                     component |= edge_stack.top();
                     e = edge_stack.top();
                     edge_stack.pop();
                 }
-                // std::cout << "component: " << component << '\n';
+                // // std::cout << "component: " << component << '\n';
                 biconnected_components.push_back(component);
             }
         }
@@ -43,7 +43,7 @@ BCPGraph::BCPGraph(PacmanGraph &g) : pg(g) {
     zero_node = boost::dynamic_bitset<>(pg.num_nodes(), 0);
     int bit = 0;
     tarjan_time = 0;
-    std::cout << "BCP Constructor\n";
+    // std::cout << "BCP Constructor\n";
     while (bit < pg.num_nodes()) {
         boost::dynamic_bitset<> node = boost::dynamic_bitset(pg.num_nodes(), 1) << bit;
         low[node] = -1;
@@ -52,32 +52,32 @@ BCPGraph::BCPGraph(PacmanGraph &g) : pg(g) {
         parent[node] = zero_node;
         bit += 1;
     }
-    std::cout << "Begin Tarjan\n";
+    // std::cout << "Begin Tarjan\n";
     bit = 0;
     while (bit < pg.num_nodes()) {
         boost::dynamic_bitset<> node = boost::dynamic_bitset(pg.num_nodes(), 1) << bit;
         if (discover_time[node] == -1) {
-            std::cout << "bit: " << bit << '\n';
+            // std::cout << "bit: " << bit << '\n';
             tarjan(node);
         }
         bit += 1;
     }
     if (!(edge_stack.size() == 0)) {
         boost::dynamic_bitset<> last_component = zero_node;
-        std::cout << zero_node << '\n';
+        // std::cout << zero_node << '\n';
         while (!(edge_stack.size() == 0)) {
             last_component |= edge_stack.top();
             edge_stack.pop();
         }
         biconnected_components.push_back(last_component);
     }
-    std::cout << biconnected_components.size() << '\n';
-    std::cout << "time: " << tarjan_time << '\n';
+    // std::cout << biconnected_components.size() << '\n';
+    // std::cout << "time: " << tarjan_time << '\n';
     for (auto b : biconnected_components) {
-        std::cout << b << "\n";
+        // std::cout << b << "\n";
     }
-    std::cout << "Remaining edges: " << edge_stack.size() << '\n';
-    std::cout << "End Constructor\n";
+    // std::cout << "Remaining edges: " << edge_stack.size() << '\n';
+    // std::cout << "End Constructor\n";
 }
 
 boost::unordered::unordered_map<boost::dynamic_bitset<>, bool> BCPGraph::articulation_table() {
@@ -112,8 +112,8 @@ std::vector<boost::dynamic_bitset<>> BCPGraph::get_components(boost::dynamic_bit
 BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boost::dynamic_bitset<> curr_component, std::vector<boost::dynamic_bitset<>>* visited_components) {
     // Determine biconnected component for this treenode to encapsulate.
     auto p = b.get_pacgraph();
-    std::cout << curr_component << "\n";
-    std::cout << "Step 1 done\n";
+    // std::cout << curr_component << "\n";
+    // std::cout << "Step 1 done\n";
     // Revise bit encodings for the given component (including connections to adjacent components).
     int bit = 0;
     boost::dynamic_bitset<> bitset = boost::dynamic_bitset<>(p.num_nodes(), 1);
@@ -125,9 +125,9 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
             nodes_within_component_count += 1;
             if (b.articulation_table()[bitset]) {
                 for (auto c : b.get_components(bitset)) {
-                    std::cout << c << "\n";
+                    // // std::cout << c << "\n";
                     if (std::find(visited_components->begin(), visited_components->end(), c) == visited_components->end()) {
-                        std::cout << "Foreign Component\n";
+                        // // std::cout << "Foreign Component\n";
                         curr_component_num_nodes += 1;
                     }
                 }
@@ -142,7 +142,7 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
     bitset = boost::dynamic_bitset<>(p.num_nodes(), 1);
     int new_bit = 0;
     int component_bit = nodes_within_component_count;
-    std::cout << curr_component_num_nodes << "\n";
+    // // std::cout << curr_component_num_nodes << "\n";
     bitset = boost::dynamic_bitset<>(p.num_nodes(), 1);
     while (bit < p.num_nodes()) {
         if ((bitset & curr_component) != boost::dynamic_bitset<>(p.num_nodes(), 0)) {
@@ -163,37 +163,43 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
         bit += 1;
         bitset <<= 1;
     }
-    std::cout << "Step 2 done\n";
+    // // std::cout << "Step 2 done\n";
     for (auto kv : new_encodings) {
-        std::cout << kv.first << " : " << kv.second << "\n";
+        // std::cout << kv.first << " : " << kv.second << "\n";
     }
-    std::cout << "\n";
+    // std::cout << "\n";
     for (auto kv : new_nodes) {
-        std::cout << kv.first << ": ";
+        // std::cout << kv.first << ": ";
         for (auto n : kv.second) {
-            std::cout << n << " ";
+            // std::cout << n << " ";
         }
-        std::cout << "\n";
+        // std::cout << "\n";
     }
-    std::cout << "\n";
+    // std::cout << "\n";
     // Create a new adjacency mapping for the new encodings.
     for (auto kv : new_encodings) {
         for (auto n : p.get_neighbors(kv.first)) {
-            if ((n & curr_component) != boost::dynamic_bitset<>(curr_component_num_nodes, 0)) {
-                // std::cout << "_____\n";
-                // std::cout << kv.first << " " << kv.second << "\n";
-                // std::cout << new_encodings[kv.first] << " " << new_encodings[n] << "\n";
+            if ((n & curr_component) != boost::dynamic_bitset<>(p.num_nodes(), 0)) {
+                // // std::cout << "_____\n";
+                // // std::cout << kv.first << " " << kv.second << "\n";
+                // // std::cout << new_encodings[kv.first] << " " << new_encodings[n] << "\n";
+                if (new_encodings.count(n)) {
                 new_nodes[kv.second].push_back(new_encodings[n]);
+                }
+                else {
+                std::cerr << "Error: Neighbor encoding not found for " << n << std::endl;
+    
+                }
             }
         }
     }
-    std::cout << "Step 3 done\n";
+    // std::cout << "Step 3 done\n";
     for (auto kv : new_nodes) {
-        std::cout << kv.first << ": ";
+        // std::cout << kv.first << ": ";
         for (auto n : kv.second) {
-            std::cout << n << " ";
+            // std::cout << n << " ";
         }
-        std::cout << "\n";
+        // std::cout << "\n";
     }
 
     // Create a new path memo for the given component.
@@ -233,7 +239,7 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
             depth += 1;
         }
     }
-    std::cout << "Step 4 done\n";
+    // std::cout << "Step 4 done\n";
     // Determine a new food bitset for the component.
     auto old_food = p.get_food();
     boost::dynamic_bitset<> new_food = boost::dynamic_bitset<>(curr_component_num_nodes, 0);
@@ -248,14 +254,14 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
         bit += 1;
         bitset <<= 1;
     }
-    std::cout << "Step 5 done\n";
-    std::cout << old_food << " " << new_food << "\n";
+    // std::cout << "Step 5 done\n";
+    // std::cout << old_food << " " << new_food << "\n";
     // Construct a new PacmanGraph using the new adjacency map, path memo, food, and converted start position.
     pg = PacmanGraph(start_node, new_food, path_memo, new_nodes);
-    std::cout << "Step 6 done\n";
+    // std::cout << "Step 6 done\n";
     // Find all articulation points for which there is at least one component not represented and make TreeNodes for them (child TreeNodes).
     compute_children(b, visited_components);
-    std::cout << "Step 7 done\n";
+    // std::cout << "Step 7 done\n";
 }
 
 void BCPGraph::TreeNode::compute_children(BCPGraph b, std::vector<boost::dynamic_bitset<>>* visited_components) {
@@ -291,8 +297,8 @@ void BCPGraph::treeify() {
             visited->push_back(c);
             break;
     }
-    // std::cout << curr_component << "\n";
-    // std::cout << "Step 1 done\n";
+    // // std::cout << curr_component << "\n";
+    // // std::cout << "Step 1 done\n";
     t = new TreeNode(*this, pg.get_pac_start(), curr_component, visited);
     delete visited;
 }
