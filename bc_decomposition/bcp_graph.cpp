@@ -126,7 +126,7 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
             if (b.articulation_table()[bitset]) {
                 for (auto c : b.get_components(bitset)) {
                     std::cout << c << "\n";
-                    if (std::find((*visited_components).begin(), (*visited_components).end(), c) == (*visited_components).end()) {
+                    if (std::find(visited_components->begin(), visited_components->end(), c) == visited_components->end()) {
                         std::cout << "Foreign Component\n";
                         curr_component_num_nodes += 1;
                     }
@@ -150,7 +150,7 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::dynamic_bitset<> start_node, boo
             new_bit += 1;
             if (b.articulation_table()[bitset]) {
                 for (auto c : b.get_components(bitset)) {
-                    if (std::find((*visited_components).begin(), (*visited_components).end(), c) == (*visited_components).end()) {
+                    if (std::find(visited_components->begin(), visited_components->end(), c) == visited_components->end()) {
                         new_encodings[c] = boost::dynamic_bitset<>(curr_component_num_nodes, 1) << component_bit;
                         component_bit += 1;
                         // Getting ahead of step 3 by adding treenode connections to adjacency list
@@ -265,8 +265,9 @@ void BCPGraph::TreeNode::compute_children(BCPGraph b, std::vector<boost::dynamic
     while (bit < b.get_pacgraph().num_nodes()) {
         if (b.articulation_table()[bitset]) {
             for (auto c : b.get_components(bitset)) {
-            if (std::find((*visited_components).begin(), (*visited_components).end(), c) == (*visited_components).end()) {
+            if (std::find(visited_components->begin(), visited_components->end(), c) == visited_components->end()) {
                 child_components.push_back({bitset, c}); // New start position, component
+                visited_components->push_back(c);
             }
             }
         }
@@ -287,7 +288,7 @@ void BCPGraph::treeify() {
     boost::dynamic_bitset curr_component;
     for (auto c : components) {
             curr_component = c;
-            (*visited).push_back(c);
+            visited->push_back(c);
             break;
     }
     // std::cout << curr_component << "\n";
