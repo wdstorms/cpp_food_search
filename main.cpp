@@ -39,6 +39,7 @@ int main()
     PacmanGraph pg(graph);
 	BCPGraph bg(pg);
 	bg.treeify();
+	delete bg.t;
 	// std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
 	// auto start = std::chrono::high_resolution_clock::now();
 	// auto path = solve(pg);
