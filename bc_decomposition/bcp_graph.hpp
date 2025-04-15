@@ -28,6 +28,7 @@ class BCPGraph {
     BCPGraph(Graph &g);
     std::vector<std::string> optimal_path_calc();
     Graph get_graph();
+    std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>> get_pac_start();
     std::vector<std::vector<std::pair<int, int>>> get_components(std::pair<int, int> node);
     boost::unordered::unordered_map<std::pair<int, int>, bool> articulation_table();
 
@@ -36,10 +37,10 @@ class BCPGraph {
         private:
         PacmanGraph pg;
         std::vector<TreeNode> children;
-        boost::unordered::unordered_map<boost::dynamic_bitset<>, boost::dynamic_bitset<>> ap_to_foreign_component_map;
+        boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> ap_to_foreign_component_map;
         public:
-        void compute_children(BCPGraph* b, std::vector<boost::dynamic_bitset<>>* visited_components);
-        TreeNode(BCPGraph* b, boost::dynamic_bitset<> node, boost::dynamic_bitset<> curr_component, std::vector<boost::dynamic_bitset<>>* visited_components);
+        void compute_children(BCPGraph b, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes);
+        TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components);
     };
 
     TreeNode* t;

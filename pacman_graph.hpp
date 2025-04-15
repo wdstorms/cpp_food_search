@@ -17,7 +17,7 @@ class PacmanGraph {
     public:
     PacmanGraph();
     PacmanGraph(Graph &g);
-    PacmanGraph(Graph &g, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes);
+    PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node);
     int num_nodes() const;
     const std::vector<std::vector<int>> &matrix();
     const boost::dynamic_bitset<> get_pac_start();

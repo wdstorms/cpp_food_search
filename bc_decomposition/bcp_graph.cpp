@@ -110,14 +110,44 @@ bool node_within_component(boost::dynamic_bitset<> n, boost::dynamic_bitset<> c)
     return (n & c) != boost::dynamic_bitset<>(n.size(), 0);
 }
 
-BCPGraph::TreeNode::TreeNode(BCPGraph* b, boost::dynamic_bitset<> start_node, boost::dynamic_bitset<> curr_component, std::vector<boost::dynamic_bitset<>>* visited_components) {
-   
+/**
+ * 
+ */
+BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components) {
+    pg = PacmanGraph(b.get_graph(), nodes, start_node);
+    std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components;
+    for (auto n : curr_component) {
+        if (b.articulation_table()[n]) {
+            for (auto c : b.get_components(n)) {
+                if (std::find(visited_components->begin(), visited_components->end(), c) != visited_components->end()) {
+                    visited_components->push_back(c);
+                    child_components.push_back({n, c});
+                }
+            }
+        }
+    }
+    compute_children(b, visited_components, child_components, nodes);
 }
 
-void BCPGraph::TreeNode::compute_children(BCPGraph* b, std::vector<boost::dynamic_bitset<>>* visited_components) {
-    
+void BCPGraph::TreeNode::compute_children(BCPGraph b, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes) {
+    for (auto c : child_components) {
+        children.push_back(TreeNode(b, nodes, c.first, c.second, visited_components));
+    }
+}
+
+std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>> BCPGraph::get_pac_start() {
+    auto matrix = g.matrix();
+    for (auto i = 0; i < (int)matrix.size(); i++) {
+        for (auto j = 0; j < (int)matrix[0].size(); j++) {
+            if (matrix[i][j] == 3) {
+                return {{i, j}, get_components({i, j})[0]};
+            }
+        }
+    }
+    return {{-1, -1}, {}};
 }
 
 void BCPGraph::treeify() {
-    
+    auto start = get_pac_start();
+    t = new TreeNode(*this, g.get_nodes(), start.first, start.second, new std::vector<std::vector<std::pair<int, int>>>());
 }

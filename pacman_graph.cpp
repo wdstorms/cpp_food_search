@@ -118,7 +118,7 @@ std::vector<boost::dynamic_bitset<>> PacmanGraph::get_neighbors(boost::dynamic_b
     return nodes[state];
 }
 
-PacmanGraph::PacmanGraph(Graph &g, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> graph_nodes) {
+PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> graph_nodes, std::pair<int, int> start_node) {
     dirs[{0, 1}] = "East";
     dirs[{0, -1}] = "West";
     dirs[{1, 0}] = "South";
@@ -136,9 +136,6 @@ PacmanGraph::PacmanGraph(Graph &g, boost::unordered::unordered_map<std::pair<int
             if (matrix[i][j] == 2) {
                 food ^= bitmap[{i, j}];
             }
-            if (matrix[i][j] == 3) {
-                pac_start = bitmap[{i, j}];
-            }
             bit += 1;
         }
     }
@@ -149,6 +146,7 @@ PacmanGraph::PacmanGraph(Graph &g, boost::unordered::unordered_map<std::pair<int
             nodes[b].push_back(bit_encode(v));
         }
     }
+    pac_start = bit_encode(start_node);
     init_path_memo();
 }
 

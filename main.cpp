@@ -46,7 +46,7 @@ int main()
 	end = std::chrono::high_resolution_clock::now();
 	dur = end - start;
 	std::cout << "Precomputation done in: " << dur.count() << " seconds.\n";
-	// // delete bg.t;
+	delete bg.t;
 	std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
 	start = std::chrono::high_resolution_clock::now();
 	auto path = solve(pg);
