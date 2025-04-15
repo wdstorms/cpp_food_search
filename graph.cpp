@@ -61,3 +61,13 @@ Graph::Graph() {
 	
 }
 
+void Graph::print_nodes() {
+	for (auto kv : nodes) {
+		auto state = kv.first;
+		for (auto n : nodes[state]) {
+			std::cout << n.first << " " << n.second << ", ";
+		}
+		std::cout << nodes[state].size() << "\n";
+	}
+}
+

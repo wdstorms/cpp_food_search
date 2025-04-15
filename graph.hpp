@@ -18,6 +18,7 @@ public:
 	void addNode(int x, int y);
     const std::vector<std::vector<int>> &matrix();
 	const boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> &get_nodes();
+	void print_nodes();
 };
 
 #endif

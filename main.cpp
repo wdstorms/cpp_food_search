@@ -10,7 +10,7 @@ int main()
 	std::vector<std::vector<int>> minimalSearch = {
 		{2, 0, 0},
 		{3, 1, 2},
-		{0, 2, 1}};
+		{0, 2, 0}};
 
 	std::vector<std::vector<int>> tinySearch = {
 		{2,2,1,1,1,2,2},
@@ -34,30 +34,30 @@ int main()
 		{1,0,0,1,0,2,2,2,2,2,1,1,1,1,1,1,0,2},
 	};
 
-	Graph graph(minimalSearch);
+	Graph graph(tinySearch);
 	auto start = std::chrono::high_resolution_clock::now();
     PacmanGraph pg(graph);
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> dur = end - start;
 	std::cout << "PacmanGraph done in: " << dur.count() << " seconds.\n";
 	start = std::chrono::high_resolution_clock::now();
-	BCPGraph bg(pg);
+	BCPGraph bg(graph);
 	bg.treeify();
 	end = std::chrono::high_resolution_clock::now();
 	dur = end - start;
 	std::cout << "Precomputation done in: " << dur.count() << " seconds.\n";
-	delete bg.t;
+	// // delete bg.t;
 	std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
 	start = std::chrono::high_resolution_clock::now();
 	auto path = solve(pg);
 	end = std::chrono::high_resolution_clock::now();
 	dur = end - start;
 	std::cout << "Path found in: " << dur.count() << " seconds.\n";
-	// for (auto i : path) {
-	// 	std::cout << i + ", ";
-	// }
-	// std::cout << '\n';
-	// std::cout << path.size() << '\n';
+	for (auto i : path) {
+		std::cout << i + ", ";
+	}
+	std::cout << '\n';
+	std::cout << path.size() << '\n';
 
 	return 0;
 }
