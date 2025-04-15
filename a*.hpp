@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <string>
-#include "pacman_graph.hpp"
+#include "bc_decomposition/bcp_graph.hpp"
 
 std::vector<std::string> astar(PacmanGraph pg);
 #endif
