@@ -14,6 +14,7 @@ class PacmanGraph {
     boost::unordered::unordered_map<boost::dynamic_bitset<>, std::vector<boost::dynamic_bitset<>>> nodes;
     boost::unordered::unordered_map<std::pair<int, int>, std::string> dirs;
     boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> path_memo;
+    std::function<std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>>(std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic)> get_successors_; 
     public:
     PacmanGraph();
     PacmanGraph(Graph &g);

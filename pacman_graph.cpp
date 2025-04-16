@@ -65,6 +65,18 @@ PacmanGraph::PacmanGraph(Graph &g) : g(g){
         }
     }
     init_path_memo();
+    get_successors_ = [this](std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic) -> std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> {
+        std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> successors;
+    for (auto n : nodes[state.first]) {
+        auto n_coord = unmap[n];
+        auto coord = unmap[state.first];
+        std::pair<int, int> d = std::pair<int, int>(n_coord.first - coord.first, n_coord.second - coord.second);
+        std::vector<std::string> a = actions;
+        a.push_back(dirs[d]);
+        successors.push_back({cost - 1 - food_heuristic(n, state.second & (~n)), {n, state.second & (~n)}, a, cost - 1});
+    }
+    return successors;
+    };
 }
 
 const std::vector<std::vector<int>> &PacmanGraph::matrix() {
@@ -102,16 +114,7 @@ void PacmanGraph::insert_to_path_memo(boost::dynamic_bitset<> src, boost::dynami
 }
 
 std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> PacmanGraph::get_successors(std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic) {
-    std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> successors;
-    for (auto n : nodes[state.first]) {
-        auto n_coord = unmap[n];
-        auto coord = unmap[state.first];
-        std::pair<int, int> d = std::pair<int, int>(n_coord.first - coord.first, n_coord.second - coord.second);
-        std::vector<std::string> a = actions;
-        a.push_back(dirs[d]);
-        successors.push_back({cost - 1 - food_heuristic(n, state.second & (~n)), {n, state.second & (~n)}, a, cost - 1});
-    }
-    return successors;
+    return get_successors_(state, actions, cost, food_heuristic);
 }
 
 std::vector<boost::dynamic_bitset<>> PacmanGraph::get_neighbors(boost::dynamic_bitset<> state) {
