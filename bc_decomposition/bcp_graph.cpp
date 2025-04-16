@@ -134,9 +134,11 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pa
         }
     }
     pg = PacmanGraph(b.get_graph(), component_nodes, start_node);
+    // TODO: Edit pg food to accurately reflect foreign component food presence
     if (pg.get_food() != boost::dynamic_bitset<>(pg.get_food().size(), 0)) {
         food = true;
     }
+    // TODO: Edit pg path_memo to accurately reflect component path length -- best done in path computation
     std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components;
     for (auto n : curr_component) {
         if (b.articulation_table()[n]) {
