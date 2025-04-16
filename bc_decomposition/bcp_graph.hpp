@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <boost/dynamic_bitset.hpp>
-#include "../pacman_graph.hpp"
+#include "../a*.hpp"
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <stack>
@@ -19,7 +19,6 @@ class BCPGraph {
     boost::unordered::unordered_map<std::pair<int, int>, int> low;
     boost::unordered::unordered_map<std::pair<int, int>, int> discover_time;
     int tarjan_time;
-    // One node is a single bit, so a biconnected component is multiple bits and can also be represented in a single bitset.
     std::vector<std::vector<std::pair<int, int>>> biconnected_components;
     void tarjan(std::pair<int, int> node);
     
@@ -37,14 +36,25 @@ class BCPGraph {
         private:
         PacmanGraph pg;
         std::vector<TreeNode> children;
-        boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> ap_to_foreign_component_map;
+        // (a_point, treenode connection node), value 
+        boost::unordered::unordered_map<std::pair<std::pair<int, int>, std::pair<int, int>>, std::vector<std::pair<int, int>>> external_node_to_foreign_component_map;
+        boost::unordered::unordered_set<std::pair<int, int>> external_nodes;
         bool food;
         std::vector<std::pair<int, int>> parent_component;
+        std::vector<std::pair<int, int>> treenode_component;
+        std::vector<std::string> optimal_path_mid;
+        int optimal_cost_mid;
+        std::vector<std::string> optimal_path_last;
+        int optimal_cost_last;
+        std::pair<int, int> pac_start;
         public:
         bool food_in_component();
         void compute_children(BCPGraph b, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes);
         TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<int, int>> parent);
-        std::vector<std::string> optimal_path_calc();
+        void optimal_path_calc(bool last);
+        std::pair<int, std::vector<std::string>> optimal_cost_and_path(bool last);
+        std::vector<std::pair<int, int>> curr_component();
+        TreeNode get_child(std::vector<std::pair<int, int>> component);
     };
 
     TreeNode* t;

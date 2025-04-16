@@ -30,4 +30,5 @@ class PacmanGraph {
     void init_path_memo();
     void insert_to_path_memo(boost::dynamic_bitset<> src, boost::dynamic_bitset<> dst, int v);
     boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> memo();
+    void set_food_bit(boost::dynamic_bitset<> node, int bit);
 };

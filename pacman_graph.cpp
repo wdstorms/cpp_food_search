@@ -127,7 +127,7 @@ PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int,
     dirs[{1, 0}] = "South";
     dirs[{-1, 0}] = "North";
     std::vector<std::vector<int>> matrix = g.matrix();
-    int n = nodes.size();
+    int n = nodes.size() + 1;
     food = boost::dynamic_bitset<>(n, 0);
     int bit = 0;
     for (auto node : graph_nodes) {
@@ -151,6 +151,32 @@ PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int,
     }
     pac_start = bit_encode(start_node);
     init_path_memo();
+    get_successors_ = [this](std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic) -> std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> {
+        std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> successors;
+    for (auto n : nodes[state.first]) {
+        auto n_coord = unmap[n];
+        auto coord = unmap[state.first];
+        std::pair<int, int> d = std::pair<int, int>(n_coord.first - coord.first, n_coord.second - coord.second);
+        std::vector<std::string> a = actions;
+        a.push_back(dirs[d]);
+        if (nodes.contains(n & boost::dynamic_bitset<>(n.size(), 1) << (n.size() - 1)) && ((state.second & (~n)) == boost::dynamic_bitset<>(n.size(), 0))) {
+            successors.push_back({cost - path_memo[{state.first, (n & boost::dynamic_bitset<>(n.size(), 1) << (n.size() - 1))}], {n, state.second & (~n)}, a, cost - path_memo[{state.first, (n & boost::dynamic_bitset<>(n.size(), 1) << (n.size() - 1))}]});
+        }
+        else {
+            successors.push_back({cost - 1 - food_heuristic(n, state.second & (~n)), {n, state.second & (~n)}, a, cost - 1});
+        }
+    }
+    return successors;
+    };
+}
+
+void PacmanGraph::set_food_bit(boost::dynamic_bitset<> node, int bit) {
+    if (bit == 0) {
+        food &= (~node);
+    }
+    else {
+        food |= node;
+    }
 }
 
 PacmanGraph::PacmanGraph() {

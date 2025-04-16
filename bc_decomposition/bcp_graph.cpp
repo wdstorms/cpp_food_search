@@ -114,7 +114,11 @@ bool node_within_component(boost::dynamic_bitset<> n, boost::dynamic_bitset<> c)
  * 
  */
 BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<int, int>> parent) {
+    pac_start = start_node;
     parent_component = parent;
+    treenode_component = curr_component;
+    optimal_cost_last = -1;
+    optimal_cost_mid = -1;
     boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> component_nodes;
     // TODO: Include one node from each foreign component that's adjacent to the current component to represent TreeNode connections.
     for (auto kv : nodes) {
@@ -127,6 +131,8 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pa
             if (b.articulation_table()[kv.first]) {
                 for (auto n : b.get_neighbors(kv.first)) {
                     if (std::find(curr_component.begin(), curr_component.end(), n) == curr_component.end()) {
+                        external_node_to_foreign_component_map[{kv.first, n}] = b.get_components(n)[0];
+                        external_nodes.insert(kv.first);
                         component_nodes[kv.first].push_back(n);
                         component_nodes[n].push_back(kv.first);
                     }
@@ -137,7 +143,7 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pa
     pg = PacmanGraph(b.get_graph(), component_nodes, start_node);
     // TODO: Edit pg food to accurately reflect foreign component food presence
     // TODO: Edit pg path_memo to accurately reflect component path length -- best done in path computation
-    // Moves out from foreign components will cost 0, but moves into child components will cost the exact amount to process them.
+    // Moves out from foreign components will cost 0, but moves into foreign components will cost the exact amount to process them.
     for (auto kv : component_nodes) {
         if (!b.articulation_table()[kv.first] && b.get_components(kv.first)[0] != curr_component) {
             pg.insert_to_path_memo(pg.bit_encode(kv.first), pg.bit_encode(kv.second[0]), 0);
@@ -195,10 +201,20 @@ bool BCPGraph::TreeNode::food_in_component() {
 }
 
 std::vector<std::string> BCPGraph::optimal_path_calc() {
-    return t->optimal_path_calc();
+    t->optimal_path_calc(true);
+    return t->optimal_cost_and_path(true).second;
 }
 
-std::vector<std::string> BCPGraph::TreeNode::optimal_path_calc() {
+BCPGraph::TreeNode BCPGraph::TreeNode::get_child(std::vector<std::pair<int, int>> component) {
+    for (auto c : children) {
+        if (component == c.curr_component()) {
+            return c;
+        }
+    }
+    return children[0];
+}
+
+void BCPGraph::TreeNode::optimal_path_calc(bool last) {
     /**
      * To get the optimal path in the current node, we need to follow these steps:
      * 1) Get optimal paths within all child nodes -- once for when the child is last and once for not
@@ -213,4 +229,92 @@ std::vector<std::string> BCPGraph::TreeNode::optimal_path_calc() {
      * A component's "Last" path is used if, during an A* search in the parent, the component's connecting node
      * is the last node visited with no outstanding food within the component or other children of the parent.
      */
+
+    if ((last && optimal_cost_last != -1) || (!last && optimal_cost_mid != -1)) {
+        return;
+    }
+
+    for (auto c : children) {
+        c.optimal_path_calc(last);
+        c.optimal_path_calc(!last);
+        for (auto kv : external_node_to_foreign_component_map) {
+            if (kv.second == c.curr_component()) {
+                auto s = boost::dynamic_bitset<>(pg.bit_encode(kv.first.first).size(), 1) << (pg.bit_encode(kv.first.first).size() - 1);
+                pg.insert_to_path_memo(pg.bit_encode(kv.first.first), pg.bit_encode(kv.first.second), c.optimal_cost_and_path(false).first);
+                pg.insert_to_path_memo(pg.bit_encode(kv.first.first), pg.bit_encode(kv.first.second) | s, c.optimal_cost_and_path(false).first);
+                break;
+            }
+        }
+    }
+    // One last edit to food needs to be done.
+    // If this component is last, the node connecting to the parent should not have food.
+    // Otherwise, it should have food.
+    bool found_parent = false;
+    for (auto kv : external_node_to_foreign_component_map) {
+        if (kv.second  == parent_component) {
+            found_parent = true;
+            if (last) {
+                    pg.insert_to_path_memo(pg.bit_encode(kv.first.second), pg.bit_encode(kv.first.first), 99999);
+                    pg.set_food_bit(pg.bit_encode(kv.first.second), 1);
+            }
+            else {
+                pg.insert_to_path_memo(pg.bit_encode(kv.first.second), pg.bit_encode(kv.first.first), 99999);
+                pg.set_food_bit(pg.bit_encode(kv.first.second), 0);
+            }
+        }
+    }
+    assert(found_parent);
+
+    auto pl = astar(pg);
+
+    // Edit path to include child paths.
+    // Follow the path from the start position
+    // When an external node is reached, remove placeholder and insert  child path
+    std::pair<int, int> node = pac_start;
+    std::pair<int, int> prev;
+
+    boost::unordered::unordered_map<std::string, std::pair<int, int>> dirs;
+    dirs["East"] = {0, 1};
+    dirs["West"] = {0, -1};
+    dirs["South"] = {1, 0};
+    dirs["North"] = {-1, 0};
+    int i = 0;
+    std::vector<std::string> total_path;
+    bool skip = false;
+    for (auto d : pl) {
+        if (skip) {
+            skip = false;
+            continue;
+        }
+        prev = node;
+        node = {node.first + dirs[d].first, node.second + dirs[d].second};
+        if (external_nodes.contains(node)) {
+            for (auto cd : get_child(external_node_to_foreign_component_map[{prev, node}]).optimal_cost_and_path(i == (int)pl.size() - 1).second) {
+                total_path.push_back(cd);
+            }
+        }
+        else {
+            total_path.push_back(d);
+        }
+        i++;
+    }
+
+    if (last) {
+        optimal_path_last = total_path;
+        optimal_cost_last = total_path.size();
+    }
+    else {
+        optimal_path_mid = total_path;
+        optimal_cost_mid = total_path.size();
+    }
+}
+
+std::pair<int, std::vector<std::string>> BCPGraph::TreeNode::optimal_cost_and_path(bool last) {
+    std::pair<int, std::vector<std::string>> l = {optimal_cost_last, optimal_path_last};
+    std::pair<int, std::vector<std::string>> m = {optimal_cost_mid, optimal_path_mid};
+    return last ? l : m;
+}
+
+std::vector<std::pair<int, int>> BCPGraph::TreeNode::curr_component() {
+    return treenode_component;
 }
