@@ -114,7 +114,29 @@ bool node_within_component(boost::dynamic_bitset<> n, boost::dynamic_bitset<> c)
  * 
  */
 BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components) {
-    pg = PacmanGraph(b.get_graph(), nodes, start_node);
+    boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> component_nodes;
+    // TODO: Include one node from each foreign component that's adjacent to the current component to represent TreeNode connections.
+    for (auto kv : nodes) {
+        if (std::find(curr_component.begin(), curr_component.end(), kv.first) != curr_component.end()) {
+            for (auto n : kv.second) {
+                if (std::find(curr_component.begin(), curr_component.end(), n) != curr_component.end()) {
+                    component_nodes[kv.first].push_back(n);
+                }
+            }
+            if (b.articulation_table()[kv.first]) {
+                for (auto n : b.get_neighbors(kv.first)) {
+                    if (std::find(curr_component.begin(), curr_component.end(), n) == curr_component.end()) {
+                        component_nodes[kv.first].push_back(n);
+                        component_nodes[n].push_back(kv.first);
+                    }
+                }
+            }
+        }
+    }
+    pg = PacmanGraph(b.get_graph(), component_nodes, start_node);
+    if (pg.get_food() != boost::dynamic_bitset<>(pg.get_food().size(), 0)) {
+        food = true;
+    }
     std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components;
     for (auto n : curr_component) {
         if (b.articulation_table()[n]) {
@@ -150,4 +172,8 @@ std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>> BCPGraph::get_p
 void BCPGraph::treeify() {
     auto start = get_pac_start();
     t = new TreeNode(*this, g.get_nodes(), start.first, start.second, new std::vector<std::vector<std::pair<int, int>>>());
+}
+
+bool BCPGraph::TreeNode::food_in_component() {
+    return food;
 }
