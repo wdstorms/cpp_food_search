@@ -39,6 +39,7 @@ PacmanGraph::PacmanGraph(Graph &g) : g(g){
     dirs[{1, 0}] = "South";
     dirs[{-1, 0}] = "North";
     std::vector<std::vector<int>> matrix = g.matrix();
+    node_count = g.num_nodes();
     int n = g.num_nodes();
     food = boost::dynamic_bitset<>(n, 0);
     int bit = 0;
@@ -64,6 +65,10 @@ PacmanGraph::PacmanGraph(Graph &g) : g(g){
             nodes[b].push_back(bit_encode(v));
         }
     }
+    for (auto kv : nodes) {
+        std::cout << kv.first << " ";
+    }
+    std::cout << "\n";
     init_path_memo();
     get_successors_ = [this](std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic) -> std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> {
         std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> successors;
@@ -102,7 +107,7 @@ std::pair<int, int> PacmanGraph::unencode(boost::dynamic_bitset<> bit) {
 }
 
 int PacmanGraph::num_nodes() const {
-    return g.num_nodes();
+    return node_count;
 };
 
 boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> PacmanGraph::memo() {
@@ -121,18 +126,20 @@ std::vector<boost::dynamic_bitset<>> PacmanGraph::get_neighbors(boost::dynamic_b
     return nodes[state];
 }
 
-PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> graph_nodes, std::pair<int, int> start_node) {
+PacmanGraph::PacmanGraph(Graph &g, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> graph_nodes, std::pair<int, int> start_node) : g(g) {
     dirs[{0, 1}] = "East";
     dirs[{0, -1}] = "West";
     dirs[{1, 0}] = "South";
     dirs[{-1, 0}] = "North";
     std::vector<std::vector<int>> matrix = g.matrix();
     int n = nodes.size() + 1;
+    node_count = n - 1;
     food = boost::dynamic_bitset<>(n, 0);
     int bit = 0;
     for (auto node : graph_nodes) {
         int i = node.first.first;
         int j = node.first.second;
+        // std::cout << i << " " << j << "\n";
         if (matrix[i][j] > 0) {
             bitmap[{i, j}] = boost::dynamic_bitset<>(n, 1) << bit;
             unmap[boost::dynamic_bitset<>(n, 1) << bit] = {i, j};
@@ -143,6 +150,7 @@ PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int,
         }
     }
     for (auto n : graph_nodes) {
+        std::cout << bit_encode(n.first) << "\n";
         boost::dynamic_bitset<> b = bit_encode(n.first);
         nodes[b] = std::vector<boost::dynamic_bitset<>>();
         for (std::pair<int, int> v : n.second) {
@@ -153,12 +161,15 @@ PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int,
     init_path_memo();
     get_successors_ = [this](std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>> state, std::vector<std::string> actions, int cost, std::function<int(boost::dynamic_bitset<>, boost::dynamic_bitset<>)> food_heuristic) -> std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> {
         std::vector<std::tuple<int, std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, std::vector<std::string>, int>> successors;
+        // exit(0);
     for (auto n : nodes[state.first]) {
+        // std::cout << n << " ";
         auto n_coord = unmap[n];
         auto coord = unmap[state.first];
         std::pair<int, int> d = std::pair<int, int>(n_coord.first - coord.first, n_coord.second - coord.second);
         std::vector<std::string> a = actions;
         a.push_back(dirs[d]);
+        // std::cout << a.size() << "; ";
         if (nodes.contains(n & boost::dynamic_bitset<>(n.size(), 1) << (n.size() - 1)) && ((state.second & (~n)) == boost::dynamic_bitset<>(n.size(), 0))) {
             successors.push_back({cost - path_memo[{state.first, (n & boost::dynamic_bitset<>(n.size(), 1) << (n.size() - 1))}], {n, state.second & (~n)}, a, cost - path_memo[{state.first, (n & boost::dynamic_bitset<>(n.size(), 1) << (n.size() - 1))}]});
         }
@@ -166,6 +177,7 @@ PacmanGraph::PacmanGraph(Graph g, boost::unordered::unordered_map<std::pair<int,
             successors.push_back({cost - 1 - food_heuristic(n, state.second & (~n)), {n, state.second & (~n)}, a, cost - 1});
         }
     }
+    // std::cout << ": " << successors.size() << "\n";
     return successors;
     };
 }

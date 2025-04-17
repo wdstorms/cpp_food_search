@@ -34,7 +34,6 @@ class BCPGraph {
     void treeify();
     class TreeNode {
         private:
-        PacmanGraph pg;
         std::vector<TreeNode> children;
         // (a_point, treenode connection node), value 
         boost::unordered::unordered_map<std::pair<std::pair<int, int>, std::pair<int, int>>, std::vector<std::pair<int, int>>> external_node_to_foreign_component_map;
@@ -43,11 +42,14 @@ class BCPGraph {
         std::vector<std::pair<int, int>> parent_component;
         std::vector<std::pair<int, int>> treenode_component;
         std::vector<std::string> optimal_path_mid;
+        boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> component_nodes;
         int optimal_cost_mid;
         std::vector<std::string> optimal_path_last;
         int optimal_cost_last;
         std::pair<int, int> pac_start;
         public:
+        PacmanGraph pg;
+        const PacmanGraph pg_init(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component);
         bool food_in_component();
         void compute_children(BCPGraph b, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>>> child_components, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes);
         TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<int, int>> parent);

@@ -50,6 +50,7 @@ std::vector<std::string> astar(PacmanGraph pg) {
     heap::priority_queue<std::tuple<int, std::pair<dynamic_bitset<>, dynamic_bitset<>>, std::vector<std::string>, int>> heap;
     std::tuple<int, std::pair<dynamic_bitset<>, dynamic_bitset<>>, std::vector<std::string>, int> start;
     start = std::tuple<int, std::pair<dynamic_bitset<>, dynamic_bitset<>>, std::vector<std::string>, int>(0, {pg.get_pac_start(), pg.get_food()}, std::vector<std::string>(), 0);
+    // std::cout << pg.get_pac_start() << "\n";
     heap.push(start);
     memo_in_use = pg.memo();
     while (!heap.empty()) {
@@ -67,6 +68,6 @@ std::vector<std::string> astar(PacmanGraph pg) {
             heap.push(n);
         }
     }
-
+    assert(false);
     return std::vector<std::string>();
 }

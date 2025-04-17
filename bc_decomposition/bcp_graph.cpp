@@ -110,16 +110,7 @@ bool node_within_component(boost::dynamic_bitset<> n, boost::dynamic_bitset<> c)
     return (n & c) != boost::dynamic_bitset<>(n.size(), 0);
 }
 
-/**
- * 
- */
-BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<int, int>> parent) {
-    pac_start = start_node;
-    parent_component = parent;
-    treenode_component = curr_component;
-    optimal_cost_last = -1;
-    optimal_cost_mid = -1;
-    boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> component_nodes;
+const PacmanGraph BCPGraph::TreeNode::pg_init(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component) {
     // TODO: Include one node from each foreign component that's adjacent to the current component to represent TreeNode connections.
     for (auto kv : nodes) {
         if (std::find(curr_component.begin(), curr_component.end(), kv.first) != curr_component.end()) {
@@ -140,7 +131,19 @@ BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pa
             }
         }
     }
-    pg = PacmanGraph(b.get_graph(), component_nodes, start_node);
+    Graph g(b.get_graph());
+    return PacmanGraph(g, component_nodes, start_node);
+}
+
+/**
+ * 
+ */
+BCPGraph::TreeNode::TreeNode(BCPGraph b, boost::unordered::unordered_map<std::pair<int, int>, std::vector<std::pair<int, int>>> nodes, std::pair<int, int> start_node, std::vector<std::pair<int, int>> curr_component, std::vector<std::vector<std::pair<int, int>>>* visited_components, std::vector<std::pair<int, int>> parent) : pg(pg_init(b, nodes, start_node, curr_component)) {
+    pac_start = start_node;
+    parent_component = parent;
+    treenode_component = curr_component;
+    optimal_cost_last = -1;
+    optimal_cost_mid = -1;
     // TODO: Edit pg food to accurately reflect foreign component food presence
     // TODO: Edit pg path_memo to accurately reflect component path length -- best done in path computation
     // Moves out from foreign components will cost 0, but moves into foreign components will cost the exact amount to process them.
@@ -233,7 +236,6 @@ void BCPGraph::TreeNode::optimal_path_calc(bool last) {
     if ((last && optimal_cost_last != -1) || (!last && optimal_cost_mid != -1)) {
         return;
     }
-
     for (auto c : children) {
         c.optimal_path_calc(last);
         c.optimal_path_calc(!last);
@@ -263,10 +265,15 @@ void BCPGraph::TreeNode::optimal_path_calc(bool last) {
             }
         }
     }
-    assert(found_parent);
-
+    // assert(found_parent);
+    std::cout << "Food: " << pg.get_food() <<  "\n";
     auto pl = astar(pg);
-
+    // std::cout << "Component astar done\n";
+    // for (auto i : pl) {
+	// 	std::cout << i + ", ";
+	// }
+	// std::cout << '\n';
+	// std::cout << pl.size() << '\n';
     // Edit path to include child paths.
     // Follow the path from the start position
     // When an external node is reached, remove placeholder and insert  child path
