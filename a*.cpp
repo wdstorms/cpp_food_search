@@ -4,31 +4,33 @@
 #include <utility>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/heap/priority_queue.hpp>
+#include <queue>
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <cassert>
 using namespace boost;
 
-static boost::unordered::unordered_map<std::pair<boost::dynamic_bitset<>, boost::dynamic_bitset<>>, int> memo_in_use;
+
+struct CustomComparator {
+    bool operator()(const std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>& lhs, const std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>& rhs) const {
+        return std::get<0>(lhs) < std::get<0>(rhs);
+    }
+};
+
+static boost::unordered::unordered_map<std::pair<std::pair<int, int>, std::pair<int, int>>, int> memo_in_use;
 
 
 using namespace boost;
-int food_search_heuristic(dynamic_bitset<> position, dynamic_bitset<> food) {
-    if (food == dynamic_bitset<>(food.size(), 0)) {
+int food_search_heuristic(std::pair<int, int> position, boost::unordered::unordered_set<std::pair<int, int>> food) {
+    if (food.size() == 0) {
         return 0;
     }
     int min_distance = 99999;
     int max_distance = -1;
-    dynamic_bitset<> min_tile;
-    dynamic_bitset<> max_tile;
-    auto food_length = food.size();
-    dynamic_bitset<> tile = dynamic_bitset<>(food_length, 1);
-    while  (food_length > 0) {
-        if ((food & tile) == dynamic_bitset<>(food.size(), 0)) {
-            food_length -= 1;
-            tile <<= 1;
-            continue;
-        }
+    std::pair<int ,int> min_tile;
+    std::pair<int ,int> max_tile;
+    for (auto tile : food) {
         int m = memo_in_use[{position, tile}];
         if (min_distance > m) {
             min_distance = m;
@@ -38,26 +40,30 @@ int food_search_heuristic(dynamic_bitset<> position, dynamic_bitset<> food) {
             max_distance = m;
             max_tile = tile;
         }
-        food_length -= 1;
-        tile <<= 1;
     }
     return std::max(max_distance, memo_in_use[{min_tile, max_tile}]);
     // return 0;
 }
 
 std::vector<std::string> astar(PacmanGraph pg) {
-    auto visited = unordered::unordered_set<std::pair<dynamic_bitset<>, dynamic_bitset<>>>();
-    heap::priority_queue<std::tuple<int, std::pair<dynamic_bitset<>, dynamic_bitset<>>, std::vector<std::string>, int>> heap;
-    std::tuple<int, std::pair<dynamic_bitset<>, dynamic_bitset<>>, std::vector<std::string>, int> start;
-    start = std::tuple<int, std::pair<dynamic_bitset<>, dynamic_bitset<>>, std::vector<std::string>, int>(0, {pg.get_pac_start(), pg.get_food()}, std::vector<std::string>(), 0);
-    // std::cout << pg.get_pac_start() << "\n";
+    auto visited = unordered::unordered_set<std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>>();
+    heap::priority_queue<std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>, boost::heap::compare<CustomComparator>> heap;
+    std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int> start;
+    start = std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>(0, {pg.get_pac_start(), pg.get_food(), pg.get_foreign_components(), -1}, std::vector<std::string>(), 0);
+    // // std::cout << pg.get_pac_start() << "\n";
     heap.push(start);
     memo_in_use = pg.memo();
+    // // std::cout << "Memo in use:\n";
+    // for (auto kv : memo_in_use) {
+    //     // std::cout << kv.first.first  << " " << kv.first.second << " " << kv.second << "\n";
+    // }
+    // std::cout << "\n";
     while (!heap.empty()) {
         auto [heur, state, path, cost] = heap.top();
         heap.pop();
-        const auto [curr_coord, curr_food] = state;
-        if (curr_food == dynamic_bitset<>(pg.num_nodes(), 0)) {
+        const auto [curr_coord, curr_food, curr_foreign_food, component] = state;
+        // assert((int)curr_food.size() == pg.num_nodes());
+        if (curr_food.size() == 0 && curr_foreign_food.size() == 0) {
             return path;
         }
         if (visited.contains(state)) {

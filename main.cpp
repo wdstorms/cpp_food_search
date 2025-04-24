@@ -8,9 +8,9 @@
 int main()
 {
 	std::vector<std::vector<int>> minimalSearch = {
-		{2, 0, 0},
-		{3, 0, 0},
-		{0, 0, 0}};
+		{2, 0, 0, 0},
+		{3, 2, 2, 2},
+		{0, 0, 2, 0}};
 
 	std::vector<std::vector<int>> tinySearch = {
 		{2,2,1,1,1,2,2},
@@ -34,7 +34,34 @@ int main()
 		{1,0,0,1,0,2,2,2,2,2,1,1,1,1,1,1,0,2},
 	};
 
-	Graph graph(minimalSearch);
+	std::vector<std::vector<int>> mediumSearch_branching_component = {
+		{0,0,3,2,2,2,1,1,2},
+		{0,0,2,2,2,0,2,0,0},
+		{0,0,2,0,0,0,1,1,1},
+		{0,0,1,2,1,2,2,0,2},
+		{0,0,1,0,1,0,0,0,0},
+		{2,1,1,0,1,1,1,1,2}
+	};
+
+	std::vector<std::vector<int>> mediumSearch_minus_one = {
+		{2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2},
+		{0,0,2,0,2,2,2,0,0,0,2,2,2,2,2,2,2,2,2,0,2,0,2,2,2,0,2,0,0},
+		{2,2,2,0,0,0,2,0,2,0,0,0,0,2,0,2,0,0,0,0,0,0,2,0,0,0,2,2,2},
+		{2,0,2,2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,2,0,2},
+		{2,0,0,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,2,0,2,0,0,0,0},
+		{0,2,2,2,2,0,2,2,2,2,2,2,2,2,3,2,2,2,2,0,2,2,2,0,2,2,2,2,2},
+	};
+
+	std::vector<std::vector<int>> mediumSearch = {
+		{2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2},
+		{0,0,2,0,2,2,2,0,0,0,2,2,2,2,2,2,2,2,2,0,2,0,2,2,2,0,2,0,0},
+		{2,2,2,0,0,0,2,0,2,0,0,0,0,2,0,2,0,0,0,0,0,0,2,0,0,0,2,2,2},
+		{2,0,2,2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,2,0,2},
+		{2,0,0,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,2,0,2,0,0,0,0},
+		{2,2,2,2,2,0,2,2,2,2,2,2,2,2,3,2,2,2,2,0,2,2,2,0,2,2,2,2,2},
+	};
+
+	Graph graph(mediumSearch);
 	auto start = std::chrono::high_resolution_clock::now();
     PacmanGraph pg(graph);
 	auto end = std::chrono::high_resolution_clock::now();
@@ -42,18 +69,17 @@ int main()
 	std::cout << "PacmanGraph done in: " << dur.count() << " seconds.\n";
 	start = std::chrono::high_resolution_clock::now();
 	BCPGraph bg(graph);
-	bg.treeify();
+	// bg.treeify();
 	end = std::chrono::high_resolution_clock::now();
 	dur = end - start;
-	std::cout << "Precomputation done in: " << dur.count() << " seconds.\n";
-
+	std::cout << "Biconnected Path Calc done in: " << dur.count() << " seconds.\n";
     // for (auto p : bg.t->pg.nodes)  {
     //     std::cout <<  p.first << " " ;
     // }
 	// std::cout << bg.t->pg.nodes.size() << "\n";
 	// exit(0);
-	bg.optimal_path_calc();
-	delete bg.t;
+	// bg.optimal_path_calc();
+	// delete bg.t;
 	std::function<std::vector<std::string>(PacmanGraph)> solve = astar;
 	start = std::chrono::high_resolution_clock::now();
 	auto path = solve(pg);
@@ -67,11 +93,10 @@ int main()
 	std::cout << path.size() << '\n';
 
 
-	std::cout << "\n";
-	for (auto i : bg.t->optimal_cost_and_path(true).second) {
-		std::cout << i + ", ";
-	}
-	std::cout << '\n';
-	std::cout << bg.t->optimal_cost_and_path(true).first << '\n';
+	// std::cout << "\n";
+	// std::cout << bg.t->optimal_cost_and_path(true).first << '\n';
+	// delete bg.t;
+	std::cout << bg.total.size() << "\n";
+	
 	return 0;
 }
