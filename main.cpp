@@ -5,7 +5,7 @@
 #include <functional>
 #include <chrono>
 
-int main()
+int main(int ac, char** av)
 {
 	std::vector<std::vector<int>> minimalSearch = {
 		{2, 0, 0, 0},
@@ -61,7 +61,37 @@ int main()
 		{2,2,2,2,2,0,2,2,2,2,2,2,2,2,3,2,2,2,2,0,2,2,2,0,2,2,2,2,2},
 	};
 
-	Graph graph(mediumSearch);
+	std::vector<std::vector<int>> m;
+
+	char* requested_graph = av[1];
+
+	if (strcmp(requested_graph, "min") == 0) {
+		m = minimalSearch;
+	}
+	else if  (strcmp(requested_graph, "tiny") == 0) {
+		m = tinySearch;
+	}
+	else if (strcmp(requested_graph, "tricky") == 0) {
+		m = trickySearch;
+	}
+	else if  (strcmp(requested_graph, "small") == 0) {
+		m = smallSearch;
+	}
+	else if (strcmp(requested_graph, "medbranch") == 0) {
+		m = mediumSearch_branching_component;
+	}
+	else if (strcmp(requested_graph, "med-1") == 0) {
+		m = mediumSearch_minus_one;
+	}
+	else if (strcmp(requested_graph, "med") == 0) {
+		m = mediumSearch;
+	}
+	else {
+		std::cout << "Invalid layout\n";
+		exit(0);
+	}
+
+	Graph graph(m);
 	auto start = std::chrono::high_resolution_clock::now();
     PacmanGraph pg(graph);
 	auto end = std::chrono::high_resolution_clock::now();
