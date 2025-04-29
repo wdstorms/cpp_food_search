@@ -7,10 +7,14 @@
 
 int main(int ac, char** av)
 {
+	if (ac <= 1) {
+		std::cout << "Please choose a layout.\n";
+		exit(0);
+	}
 	std::vector<std::vector<int>> minimalSearch = {
-		{2, 0, 0, 0},
-		{3, 2, 2, 2},
-		{0, 0, 2, 0}};
+		{2, 2, 0, 0},
+		{3, 2, 2, 0},
+		{0, 0, 0, 0}};
 
 	std::vector<std::vector<int>> tinySearch = {
 		{2,2,1,1,1,2,2},
@@ -61,6 +65,22 @@ int main(int ac, char** av)
 		{2,2,2,2,2,0,2,2,2,2,2,2,2,2,3,2,2,2,2,0,2,2,2,0,2,2,2,2,2},
 	};
 
+	std::vector<std::vector<int>> bigSearch = {
+		{2,2,2,2,2,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,2,2,2,2,2},
+		{2,0,0,0,2,0,2,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,2,0,2,2,2,2,2},
+		{2,0,2,2,2,0,2,0,2,2,2,2,2,2,0,2,2,2,2,2,2,0,2,0,2,2,2,2,2},
+		{2,2,2,0,0,0,2,0,2,0,0,0,0,2,0,2,0,0,0,0,2,2,2,0,0,0,2,2,2},
+		{0,0,2,0,2,0,2,0,2,0,2,2,2,2,2,2,0,2,2,0,2,0,2,2,2,0,2,0,0},
+		{2,2,2,0,2,0,0,0,2,0,2,0,0,0,1,0,0,0,2,0,2,0,0,0,2,0,2,2,2},
+		{2,0,0,0,2,2,2,2,2,2,2,0,1,1,1,1,1,0,2,2,2,2,2,2,2,0,0,0,2},
+		{2,2,2,0,2,0,0,0,0,0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,2,0,2,2,2},
+		{0,0,2,0,2,2,2,0,2,0,2,2,2,2,0,2,2,2,2,0,2,0,2,2,2,0,2,0,0},
+		{2,2,2,0,0,0,2,0,2,0,0,0,0,2,0,2,0,0,0,0,2,0,2,0,0,0,2,2,2},
+		{2,2,2,2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,2,2,0,2,2,2,2,2,0,2},
+		{2,2,2,2,2,0,2,0,0,0,2,0,0,0,0,0,0,0,2,0,0,0,2,0,2,0,0,0,2},
+		{2,2,2,2,2,0,2,2,2,2,2,2,2,2,3,2,2,2,2,0,2,2,2,0,2,2,2,2,2}
+	};
+
 	std::vector<std::vector<int>> m;
 
 	char* requested_graph = av[1];
@@ -86,6 +106,9 @@ int main(int ac, char** av)
 	else if (strcmp(requested_graph, "med") == 0) {
 		m = mediumSearch;
 	}
+	else if (strcmp(requested_graph, "big") == 0) {
+		m = bigSearch;
+	}
 	else {
 		std::cout << "Invalid layout\n";
 		exit(0);
@@ -96,13 +119,14 @@ int main(int ac, char** av)
     PacmanGraph pg(graph);
 	auto end = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> dur = end - start;
-	std::cout << "PacmanGraph done in: " << dur.count() << " seconds.\n";
-	start = std::chrono::high_resolution_clock::now();
-	BCPGraph bg(graph);
-	// bg.treeify();
-	end = std::chrono::high_resolution_clock::now();
-	dur = end - start;
-	std::cout << "Biconnected Path Calc done in: " << dur.count() << " seconds.\n";
+	// std::cout << "PacmanGraph done in: " << dur.count() << " seconds.\n";
+	// start = std::chrono::high_resolution_clock::now();
+	// BCPGraph bg(graph);
+	// // bg.treeify();
+	// end = std::chrono::high_resolution_clock::now();
+	// dur = end - start;
+	// std::cout << "Biconnected Path Calc done in: " << dur.count() << " seconds.\n";
+	// std::cout << bg.total.size() << "\n";
     // for (auto p : bg.t->pg.nodes)  {
     //     std::cout <<  p.first << " " ;
     // }
@@ -126,7 +150,6 @@ int main(int ac, char** av)
 	// std::cout << "\n";
 	// std::cout << bg.t->optimal_cost_and_path(true).first << '\n';
 	// delete bg.t;
-	std::cout << bg.total.size() << "\n";
 	
 	return 0;
 }

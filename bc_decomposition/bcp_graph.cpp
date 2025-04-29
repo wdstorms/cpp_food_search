@@ -8,6 +8,36 @@ std::vector<std::pair<int, int>> BCPGraph::get_neighbors(std::pair<int, int> sta
     return nodes[state];
 }
 
+void BCPGraph::init_path_memo() {
+    for (auto n : g.get_nodes()) {
+        int depth = 0;
+        auto visited = boost::unordered::unordered_set<std::pair<int ,int>>();
+        auto q = std::queue<std::pair<int ,int>>();
+        q.push(n.first);
+        while (!(q.size() == 0)) {
+            int level_size = q.size();
+            while (level_size != 0 && !(q.size() == 0)) {
+                auto state = q.front();
+                q.pop();
+                if (visited.contains(state)) {
+                    continue;
+                }
+                visited.insert(state);
+                if (depth > 0) {
+                    path_memo[{n.first, state}] = depth;
+                }
+                for (auto node : get_neighbors(state)) {
+                    if (!visited.contains(node)) {
+                        q.push(node);
+                    }
+                }
+                level_size -= 1;
+            }
+            depth += 1;
+        }
+    }
+}
+
 void BCPGraph::tarjan(std::pair<int, int> node) {
     discover_time[node] = low[node] = tarjan_time;
     tarjan_time += 1;
@@ -184,12 +214,22 @@ bool node_within_component(boost::dynamic_bitset<> n, boost::dynamic_bitset<> c)
 //     }
 // }
 
+std::vector<std::pair<int, int>> longest_component(std::vector<std::vector<std::pair<int, int>>> components) {
+    std::vector<std::pair<int, int>> component;
+    for (auto c : components) {
+        if (c.size() > component.size()) {
+            component = c;
+        }
+    }
+    return component;
+}
+
 std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>> BCPGraph::get_pac_start() {
     auto matrix = g.matrix();
     for (auto i = 0; i < (int)matrix.size(); i++) {
         for (auto j = 0; j < (int)matrix[0].size(); j++) {
             if (matrix[i][j] == 3) {
-                return {{i, j}, get_components({i, j})[0]};
+                return {{i, j}, longest_component(get_components({i, j}))};
             }
         }
     }
@@ -336,11 +376,6 @@ std::vector<std::string> BCPGraph::biconnected_graph_optimal_path(std::vector<st
     }
     auto vis = visited_components;
     vis.push_back(curr_component);
-    // std::cout << "Curr component: ";
-    for (auto n : curr_component) {
-        // std::cout << n.first << " " << n.second << ", ";
-    }
-    // std::cout << "\n";
     if (last_component) {
         // std::cout << "Last\n";
     }
@@ -377,39 +412,69 @@ std::vector<std::string> BCPGraph::biconnected_graph_optimal_path(std::vector<st
             child_paths[child_component] = {intermediate_component_path, last_component_path};
         }
     }
-    boost::unordered::unordered_set<std::pair<int, int>> food;
+    std::vector<std::pair<int, int>> food;
     for (auto n : curr_component) {
         if (g.matrix()[n.first][n.second] == 2) {
-            food.insert(n);
+            food.push_back(n);
         }
     }
-
+    std::sort(food.begin(), food.end());
     std::vector<std::pair<int, int>> parent_component;
     if (visited_components.size() > 0) {
         parent_component = visited_components[visited_components.size() - 1];
     }
 
     // {a_point, intermediate length, last length}
-    boost::unordered::unordered_map<std::pair<std::pair<int ,int>, std::vector<std::pair<int, int>>>, std::pair<int, int>> foreign_food_map;
+    boost::unordered::unordered_map<std::pair<std::pair<int ,int>, std::vector<std::pair<int, int>>>, std::pair<std::pair<std::pair<int, int>, std::pair<int, int>>, std::pair<int, int>>> foreign_food_map;
 
     for (auto n : curr_component) {
         if (articulation_table()[n]) {
             for (auto c : get_components(n)) {
                 if (c != curr_component) {
-                    if (child_paths.contains(c) && std::find(peer_components.begin(), peer_components.end(), c) == peer_components.end()) {
-                        foreign_food_map[{n, c}] = {child_paths[c].first.size(), child_paths[c].second.size()};
+                    std::pair<int, int> min_tile = {-1, -1};
+                    std::pair<int, int> max_tile;
+                    boost::unordered::unordered_set<std::pair<int, int>> visited;
+                    std::queue<std::pair<int, int>> q;
+                    q.push(n);
+                    while (!(q.size() == 0)) {
+                        auto state = q.front();
+                        q.pop();
+                        if (visited.contains(state)) {
+                            continue;
+                        }
+                        visited.insert(state);
+                        if (g.matrix()[state.first][state.second] == 2 && state != start_node) {
+                            max_tile = state;
+                            if (min_tile == (std::pair<int, int>){-1, -1}) {
+                                min_tile = state;
+                            }
+                        }
+                        for (auto neighbor : get_neighbors(state)) {
+                            if (std::find(curr_component.begin(), curr_component.end(), neighbor) == curr_component.end() && neighbor != n) {
+                                q.push(neighbor);
+                            }
+                        }
                     }
-                    else if (!last_component && std::find(peer_components.begin(), peer_components.end(), c) == peer_components.end()) {
-                        foreign_food_map[{n, c}] = {99999, 0};
+                    if (min_tile != (std::pair<int, int>){-1, -1}) {
+                        if (child_paths.contains(c) && std::find(peer_components.begin(), peer_components.end(), c) == peer_components.end()) {
+                            foreign_food_map[{n, c}] = {{min_tile, max_tile}, {child_paths[c].first.size(), child_paths[c].second.size()}};
+                        }
+                        else if (!last_component && std::find(peer_components.begin(), peer_components.end(), c) == peer_components.end()) {
+                            foreign_food_map[{n, c}] = {{min_tile, max_tile}, {99999, 0}};
+                        }
                     }
                 }
             }
         }
     }
 
-    PacmanGraph* pg = new PacmanGraph(food, start_node, curr_component, foreign_food_map, articulation_points);
+    PacmanGraph* pg = new PacmanGraph(food, start_node, curr_component, foreign_food_map, articulation_points, path_memo);
     // std::cout << "Begin A*\n";
+    auto start = std::chrono::high_resolution_clock::now();
     auto path = astar(*pg);
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> dur = end - start;
+
     delete pg;
     // exit(0);
     boost::unordered::unordered_map<std::pair<int ,int>, std::vector<std::vector<std::pair<int ,int>>>> foreign_components;
@@ -499,5 +564,11 @@ std::vector<std::string> BCPGraph::biconnected_graph_optimal_path(std::vector<st
     // std::cout << "\n";
 
     // std::cout << "\n";
+    // std::cout << "Component ";
+
+    // for (auto n : curr_component) {
+    //     std::cout << n.first << " " << n.second << ", ";
+    // }
+    // std::cout << "Done in " << dur.count() << " seconds.\n";
     return total_path;
 }

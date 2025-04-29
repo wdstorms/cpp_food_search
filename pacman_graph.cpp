@@ -20,9 +20,8 @@ void PacmanGraph::init_path_memo() {
                     continue;
                 }
                 visited.insert(state);
-                if (depth == 1) {
+                if (depth > 0) {
                     path_memo[{n, state}] = depth;
-                    continue;
                 }
                 for (auto node : get_neighbors(state)) {
                     if (!visited.contains(node)) {
@@ -43,12 +42,13 @@ PacmanGraph::PacmanGraph(Graph &g) {
     }
     for (auto n : curr_component) {
         if (g.matrix()[n.first][n.second] == 2) {
-            food.insert(n);
+            food.push_back(n);
         }
         else if (g.matrix()[n.first][n.second] == 3) {
             pac_start = n;
         }
     }
+    std::sort(food.begin(), food.end());
     init_path_memo();
 }
 
@@ -60,7 +60,7 @@ const std::pair<int ,int> PacmanGraph::get_pac_start() {
     return pac_start;
 }
 
-const boost::unordered::unordered_set<std::pair<int, int>> PacmanGraph::get_food() {
+const std::vector<std::pair<int, int>> PacmanGraph::get_food() {
     return food;
 }
 
@@ -97,9 +97,9 @@ boost::unordered::unordered_map<std::pair<std::pair<int, int>, std::pair<int, in
 //     path_memo[{src, dst}] = v;
 // }
 
-std::vector<std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>> PacmanGraph::get_successors(std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int ,int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int> state, std::vector<std::string> actions, int cost, std::function<int(std::pair<int ,int>, boost::unordered::unordered_set<std::pair<int, int>>)> food_heuristic) {
+std::vector<std::tuple<int, std::tuple<std::pair<int, int>, std::vector<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>> PacmanGraph::get_successors(std::tuple<std::pair<int, int>, std::vector<std::pair<int ,int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int> state, std::vector<std::string> actions, int cost, std::function<int(std::pair<int ,int>, std::vector<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int, int>>>, PacmanGraph*)> food_heuristic) {
     // return get_successors_(state, actions, cost, food_heuristic);
-    std::vector<std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::unordered_set<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>> successors;
+    std::vector<std::tuple<int, std::tuple<std::pair<int, int>, std::vector<std::pair<int, int>>, boost::unordered::unordered_set<std::vector<std::pair<int ,int>>>, int>, std::vector<std::string>, int>> successors;
     // exit(0);
     int x = std::get<0>(state).first;
     int y = std::get<0>(state).second;
@@ -115,12 +115,13 @@ std::vector<std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::un
             // std::cout << dirs.find(d)->second << "\n";
             auto next_food = std::get<1>(state);
             auto next_foreign_food = std::get<2>(state);
-            if (next_food.contains({nextx, nexty})) {
-                next_food.erase({nextx, nexty});
+            // std::find(next_food.begin(), next_food.end(), {nextx, nexty}) != next_food.end()
+            if (std::find(next_food.begin(), next_food.end(), (std::pair<int, int>){nextx, nexty}) != next_food.end()) {
+                next_food.erase(std::find(next_food.begin(), next_food.end(), (std::pair<int, int>){nextx, nexty}));
             }
             auto a = actions;
             a.push_back(dirs.find(d)->second);
-            successors.push_back({cost - 1 - food_heuristic({nextx, nexty}, next_food), {{nextx, nexty}, next_food, next_foreign_food, -1}, a, cost - 1});
+            successors.push_back({cost - 1 - food_heuristic({nextx, nexty}, next_food, next_foreign_food, this), {{nextx, nexty}, next_food, next_foreign_food, -1}, a, cost - 1});
         }
     }
     if (a_points[{x, y}]) {
@@ -133,14 +134,14 @@ std::vector<std::tuple<int, std::tuple<std::pair<int, int>, boost::unordered::un
                     auto next_foreign_food = std::get<2>(state);
                     if (next_foreign_food.contains(foreign_components[{x, y}][i])) {
                         auto next_food = std::get<1>(state);
-                        int min_component_cost = foreign_food[{{x, y}, foreign_components[{x, y}][i]}].first;
+                        int min_component_cost = foreign_food[{{x, y}, foreign_components[{x, y}][i]}].second.first;
                         if (next_food.size() == 0 && next_foreign_food.size() == 1) {
-                            min_component_cost = foreign_food[{{x, y}, foreign_components[{x, y}][i]}].second;
+                            min_component_cost = foreign_food[{{x, y}, foreign_components[{x, y}][i]}].second.second;
                         }
                         next_foreign_food.erase(foreign_components[{x, y}][i]);
                         auto a = actions;
                         a.push_back(std::to_string(i));
-                        successors.push_back({cost - min_component_cost, {{x, y}, next_food, next_foreign_food, i}, a, cost - min_component_cost});
+                        successors.push_back({cost - min_component_cost - food_heuristic({x, y}, next_food, next_foreign_food, this), {{x, y}, next_food, next_foreign_food, i}, a, cost - min_component_cost});
                     }
                 }
             }
@@ -218,7 +219,7 @@ std::vector<std::pair<int, int>> PacmanGraph::get_neighbors(std::pair<int, int> 
 //     }
 // }
 
-PacmanGraph::PacmanGraph(boost::unordered::unordered_set<std::pair<int, int>> food_list, std::pair<int, int> start_node, std::vector<std::pair<int, int>> component, boost::unordered::unordered_map<std::pair<std::pair<int ,int>, std::vector<std::pair<int, int>>>, std::pair<int, int>> foreign_food_map, boost::unordered::unordered_map<std::pair<int, int>, bool> articulation_points) {
+PacmanGraph::PacmanGraph(std::vector<std::pair<int, int>> food_list, std::pair<int, int> start_node, std::vector<std::pair<int, int>> component, boost::unordered::unordered_map<std::pair<std::pair<int ,int>, std::vector<std::pair<int, int>>>, std::pair<std::pair<std::pair<int, int>, std::pair<int, int>>, std::pair<int, int>>> foreign_food_map, boost::unordered::unordered_map<std::pair<int, int>, bool> articulation_points, boost::unordered::unordered_map<std::pair<std::pair<int, int>, std::pair<int, int>>, int> pm) {
     // foreign food map bits denote component switch
     curr_component = component;
     // std::cout << "Component size: " << component.size() << "\n";
@@ -247,7 +248,7 @@ PacmanGraph::PacmanGraph(boost::unordered::unordered_set<std::pair<int, int>> fo
     //     }
     //     // std::cout << "\n";
     // }
-    init_path_memo();
+    path_memo = pm;
     // for (auto n : foreign_food_map) {
     //     nodes[bitmap[n.first.first]].push_back(boost::dynamic_bitset<>(node_count, 1) << bit);
     //     nodes[boost::dynamic_bitset<>(node_count, 1) << bit].push_back(bitmap[n.first.first]);
@@ -276,7 +277,7 @@ PacmanGraph::PacmanGraph(boost::unordered::unordered_set<std::pair<int, int>> fo
     pac_start = start_node;
     // food &= ~pac_start;
     if (std::find(food.begin(), food.end(), pac_start) != food.end()) {
-    food.erase(std::find(food.begin(), food.end(), pac_start));
+        food.erase(std::find(food.begin(), food.end(), pac_start));
     }
     for (auto ac : foreign_food_map) {
         auto a = ac.first.first;
@@ -359,6 +360,10 @@ PacmanGraph::PacmanGraph(boost::unordered::unordered_set<std::pair<int, int>> fo
     // }
     //     return successors;
     // };
+}
+
+boost::unordered::unordered_map<std::pair<std::pair<int ,int>, std::vector<std::pair<int, int>>>, std::pair<std::pair<std::pair<int, int>, std::pair<int, int>>, std::pair<int, int>>>* PacmanGraph::get_foreign_food_map() {
+    return &foreign_food;
 }
 
 PacmanGraph::PacmanGraph() {

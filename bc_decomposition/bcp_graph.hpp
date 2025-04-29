@@ -22,10 +22,11 @@ class BCPGraph {
     int tarjan_time;
     std::vector<std::vector<std::pair<int, int>>> biconnected_components;
     void tarjan(std::pair<int, int> node);
-    
+    boost::unordered::unordered_map<std::pair<std::pair<int, int>, std::pair<int, int>>, int> path_memo;
     std::vector<std::pair<int, int>> get_neighbors(std::pair<int, int> state); 
     public:
     BCPGraph(Graph &g);
+    void init_path_memo();
     std::vector<std::string> optimal_path_calc();
     Graph get_graph();
     std::pair<std::pair<int, int>, std::vector<std::pair<int, int>>> get_pac_start();
